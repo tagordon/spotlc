@@ -7,6 +7,131 @@ import jax
 from jax import numpy as jnp
 from carlson import rfv, rjpv, rcpv, rdv
 
+def int23_circ(r, z, y, x, a4, b4):
+
+    a3 = (1 - (r**2 + z**2)) / (2 * r * z)
+    
+    d12 = -2
+    d13 = -1 - a3
+    d14 = b4 - a4
+    d24 = b4 + a4
+    d34 = a3 * b4 + a4
+
+    r24 = -d24 / b4
+    r14 = d14 / b4
+    r34 = - d34 / b4
+
+    x1 = jnp.sqrt(1 + x)
+    x2 = jnp.sqrt(1 - x)
+    x3 = jnp.sqrt(a3 - x)
+    x4 = jnp.sqrt(a4 + b4 * x)
+
+    y1 = jnp.sqrt(1 + y)
+    y2 = jnp.sqrt(1 -  y)
+    y3 = jnp.sqrt(a3 - y)
+    y4 = jnp.sqrt(a4 + b4 * y)
+
+    U1 = (x1 * y2 * y3 + y1 * x2 * x3) / (x - y)
+    U2 = (x2 * y1 * y3 + y2 * x1 * x3) / (x - y)
+    U3 = (x3 * y1 * y2 + y3 * x1 * x2) / (x - y)
+
+    W2 = U1 * U1 - b4 * d12 * d13 / d14
+    Q2 = (x4 * y4 / (x1 * y1))**2 * W2
+    P2 = Q2 + b4 * d24 * d34 / d14
+
+    I1c = 2 * rf(U3 * U3, U2 * U2, U1 * U1)
+    I2c = (2 / 3) * d12 * d13 * rd(U3 * U3, U2 * U2, U1 * U1) + 2 * x1 * y1 / U1
+    I3c = -2 * d12 * d13 / (3 * d14) * rj_posp(U3 * U3, U2 * U2, U1 * U1, W2) + 2 * rc_posy(P2, Q2)
+
+    A111 = x1 * x2 * x3 - y1 * y2 * y3
+    J1c = d12 * d13 * I1c - 2 * A111
+
+    return (
+        - 3 * r24 * d34 * I3c 
+        + (r14 + r24 + r34) * I2c 
+        - J1c
+    ) / (3 * b4)
+
+def int4_circ(r, z, y, x):
+
+    a2 = (1 - (r**2 + z**2)) / (2 * r * z)
+    
+    d12 = a2 - 1
+    d13 = 2
+    d23 = a2 + 1
+
+    x1 = jnp.sqrt(1 - x)
+    x2 = jnp.sqrt(a2 - x)
+    x3 = jnp.sqrt(1 + x)
+
+    y1 = jnp.sqrt(1 - y)
+    y2 = jnp.sqrt(a2 - y)
+    y3 = jnp.sqrt(1 + y)
+
+    U1 = (x1 * y2 * y3 + y1 * x2 * x3) / (x - y)
+    U2 = (x2 * y1 * y3 + y2 * x1 * x3) / (x - y)
+    U3 = (x3 * y1 * y2 + y3 * x1 * x2) / (x - y)
+
+    I1c = 2 * rf(U3 * U3, U2 * U2, U1 * U1)
+    I2c = (2 / 3) * d12 * d13 * rd(U3 * U3, U2 * U2, U1 * U1) + 2 * x1 * y1 / U1
+
+    A111 = x1 * x2 * x3 - y1 * y2 * y3
+    J1c = d12 * d13 * I1c + 2 * A111
+
+    return ((d23 + d13) * I2c + J1c) / 3
+
+def g1_circ(r, z, y, x):
+
+    fac = r / (6 * (r + z) * (r - z))
+    fx = jnp.arctan((x + z / r) / jnp.sqrt(1 - x * x))
+    fy = jnp.arctan((y + z / r) / jnp.sqrt(1 - y * y))
+    return (fx - fy) / 3
+
+def g4_circ(r, z, y, x):
+
+    fac = r * (r - z + 1) * (r - z - 1) / (6 * (r - z)) * jnp.sqrt(2 * r * z)
+    return fac * int4_circ(r, z, y, x)
+
+def g2_circ(r, z, y, x):
+
+    fac = r * (1 + r + z) * (r + z - 1) * jnp.sqrt(r * z / 2) / (3 * (r + z))
+    return fac * int23_circ(r, z, y, x, 1, -1)
+
+def g3_circ(r, z, y, x):
+
+    a4 = (r * r + z * z) / (2 * r * z)
+    fac = 2 * r * r * z * z / jnp.sqrt(2 * r * z) / (3 * (r + z) * (r - z))
+    return fac * int23_circ(r, z, y, x, a4, 1)
+
+@jax.jit 
+def arc_circ(r, z, y, x):
+
+    ig1 = g1_circ(r, z, y, x)
+    ig2 = g2_circ(r, z, y, x)
+    ig3 = g3_circ(r, z, y, x)
+    ig4 = g4_circ(r, z, y, x)
+
+    return ig1 + ig2 + ig3 + ig4
+
+# for the complete integral we just use the 
+# trapezoidal rule, which converges exponentially 
+# for periodic functions 
+@jax.jit
+def arc_complete(a, b, z):
+
+    def ig(t):
+
+        s = jnp.sin(t)
+        x = (a * jnp.cos(t))**2 + (z + b * s)**2
+        return a * (b + s * z) * (
+            1 - (1 - x) ** 1.5
+        ) / (3 * x)
+    
+    ni = jnp.arange(12)
+    twopi_n = jnp.pi / 6
+    
+    return twopi_n * jnp.sum(ig(twopi_n * ni)) * 0.5
+
 # this is the full integral along the arc
 @jax.jit
 def arc(a, b, z, y, x):
