@@ -5,7 +5,8 @@
 
 import jax
 from jax import numpy as jnp
-from carlson import rfv, rjpv, rcpv, rdv
+#from carlson import rfv, rjpv, rcpv, rdv
+from carlson import rf, rj_posp, rc_posy, rd
 
 def int23_circ(r, z, y, x, a4, b4):
 
@@ -104,7 +105,7 @@ def g3_circ(r, z, y, x):
     return fac * int23_circ(r, z, y, x, a4, 1)
 
 @jax.jit 
-def arc_circ(r, z, y, x):
+def G_circ(r, z, y, x):
 
     ig1 = g1_circ(r, z, y, x)
     ig2 = g2_circ(r, z, y, x)
@@ -117,7 +118,7 @@ def arc_circ(r, z, y, x):
 # trapezoidal rule, which converges exponentially 
 # for periodic functions 
 @jax.jit
-def arc_complete(a, b, z):
+def G_complete(a, b, z):
 
     def ig(t):
 
@@ -132,9 +133,25 @@ def arc_complete(a, b, z):
     
     return twopi_n * jnp.sum(ig(twopi_n * ni)) * 0.5
 
+@jax.jit
+def G_complete_circ(r, z):
+
+    def ig(t):
+
+        s = jnp.sin(t)
+        x = r**2 + z**2 + 2 * r * z * s
+        return r * (r + s * z) * (
+            1 - (1 - x) ** 1.5
+        ) / (3 * x)
+
+    ni = jnp.arange(12)
+    twopi_n = jnp.pi / 6
+    
+    return twopi_n * jnp.sum(ig(twopi_n * ni)) * 0.5
+
 # this is the full integral along the arc
 @jax.jit
-def arc(a, b, z, y, x):
+def G(a, b, z, y, x):
 
     c = jnp.sqrt(a * a - b * b)
     oc2 = 1 / (c * c)
@@ -196,11 +213,11 @@ def int23(y, x, f, g, b1, b4):
     Q2 = W2 / (x1 * y1)**2
     P2 = Q2 - 1
     rho = d14 * (bet1 - jnp.sqrt(2 * c1sq)) / b1
-    erf = rfv(M2, Lm2, Lp2)
-    erj = rjpv(M2, Lm2, Lp2, M2 + rho)
-    erd = rdv(M2, Lm2, Lp2)
-    rcuw = rcpv(U2, W2)
-    rcpq = rcpv(P2, Q2)
+    erf = rf(M2, Lm2, Lp2)
+    erj = rj_posp(M2, Lm2, Lp2, M2 + rho)
+    erd = rd(M2, Lm2, Lp2)
+    rcuw = rc_posy(U2, W2)
+    rcpq = rc_posy(P2, Q2)
 
     I1 = 4 * erf
     I2 = (
@@ -268,11 +285,11 @@ def int4(y, x, f, g):
     Q2 = W2 / (x1 * y1)**2
     P2 = Q2 - 1
     rho = d14 * (bet1 - jnp.sqrt(2 * c1sq))
-    erf = rfv(M2, Lm2, Lp2)
-    erj = rjpv(M2, Lm2, Lp2, M2 + rho)
-    erd = rdv(M2, Lm2, Lp2)
-    rcuw = rcpv(U2, W2)
-    rcpq = rcpv(P2, Q2)
+    erf = rf(M2, Lm2, Lp2)
+    erj = rj_posp(M2, Lm2, Lp2, M2 + rho)
+    erd = rd(M2, Lm2, Lp2)
+    rcuw = rc_posy(U2, W2)
+    rcpq = rc_posy(P2, Q2)
 
     I1 = 4 * erf
     I2 = (
@@ -345,23 +362,23 @@ def int56(y, x, f, g, a5, b5):
     P12 = Q12 - 1
     rho = -d14 * (beta1 - jnp.sqrt(2 * c1sq))
 
-    erf = rfv(M2, Lm2, Lp2)
+    erf = rf(M2, Lm2, Lp2)
     I1 = 4 * erf
     I2 = (2 / 3) * jnp.sqrt(c1sq / c4sq) * (
-        4 * (c14sq + c1c4) * rdv(M2, Lm2, Lp2) 
+        4 * (c14sq + c1c4) * rd(M2, Lm2, Lp2) 
         - 6 * erf 
         + 3 / U
     ) + 2 * x1 * y1 / (x4 * y4 * U)
     I3 = (2 / 3) * jnp.sqrt(c1sq / c5sq) * (
-        4 * (d14 / d15) * (c15sq + c1c5) * rjpv(M2, Lm2, Lp2, Wp2) 
+        4 * (d14 / d15) * (c15sq + c1c5) * rj_posp(M2, Lm2, Lp2, Wp2) 
         - 6 * erf 
-        + 3 * rcpv(U2, W2)
-    ) + 2 * rcpv(P2, Q2)
+        + 3 * rc_posy(U2, W2)
+    ) + 2 * rc_posy(P2, Q2)
     Ip3 = (1 / 3) * jnp.sqrt(2 * c1sq) * (
-        4 * rho * rjpv(M2, Lm2, Lp2, M2 + rho) 
+        4 * rho * rj_posp(M2, Lm2, Lp2, M2 + rho) 
         - 6 * erf 
-        + 3 * rcpv(U2, W12)
-    ) + 2 * rcpv(P12, Q12)
+        + 3 * rc_posy(U2, W12)
+    ) + 2 * rc_posy(P12, Q12)
 
     sigma = r15 + r45 + beta5 / b5
     tau = r15**2 + r45**2 + c5sq / b5**2 - delta2
