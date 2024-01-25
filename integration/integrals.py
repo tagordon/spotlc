@@ -5,7 +5,6 @@
 
 import jax
 from jax import numpy as jnp
-#from carlson import rfv, rjpv, rcpv, rdv
 from carlson import rf, rj_posp, rc_posy, rd
 
 def int23_circ(r, z, y, x, a4, b4):
