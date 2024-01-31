@@ -131,7 +131,7 @@ def int2_circ_x1(r, z, y, x):
 
     return (J1c - (r14 + r34) * I2c) / 3
 
-def int4_circ(r, z, y, x):
+def int4_circ_halfcomp(r, z, y, x):
 
     a2 = (1 - (r**2 + z**2)) / (2 * r * z)
     
@@ -158,110 +158,6 @@ def int4_circ(r, z, y, x):
     J1c = d12 * d13 * I1c + 2 * A111
 
     return ((d23 + d13) * I2c + J1c) / 3
-
-def g1_circ_x1(r, z, y):
-
-    fac = r / (6 * (r + z) * (r - z))
-    fx = jnp.pi / 2
-    fy = jnp.arctan((y + z / r) / jnp.sqrt(1 - y * y))
-    return (fx - fy) / 3
-
-# sign of fy (and fx above) should check if the value of G_circ comes out wrong 
-def g1_circ_ym1(r, z, x):
-
-    fac = r / (6 * (r + z) * (r - z))
-    fx = jnp.arctan((x + z / r) / jnp.sqrt(1 - x * x))
-    fy = jnp.pi / 2
-    return (fx - fy) / 3
-
-def g4_circ(r, z, y, x):
-
-    fac = r * (r - z + 1) * (r - z - 1) / (6 * (r - z)) * jnp.sqrt(2 * r * z)
-    return fac * int4_circ(r, z, y, x)
-
-def g2_circ_ym1(r, z, x):
-
-    fac = r * (1 + r + z) * (r + z - 1) * jnp.sqrt(r * z / 2) / (3 * (r + z))
-    return fac * int23_circ_ym1(r, z, -1.0, x, 1, -1)
-
-def g2_circ_x1(r, z, y):
-
-    fac = r * (1 + r + z) * (r + z - 1) * jnp.sqrt(r * z / 2) / (3 * (r + z))
-    return fac * int2_circ_x1(r, z, y, 1.0)
-
-def g3_circ_ym1(r, z, x):
-
-    a4 = (r * r + z * z) / (2 * r * z)
-    fac = 2 * r * r * z * z / jnp.sqrt(2 * r * z) / (3 * (r + z) * (r - z))
-    return fac * int23_circ_ym1(r, z, -1.0, x, a4, 1)
-
-def g3_circ_x1(r, z, y):
-
-    a4 = (r * r + z * z) / (2 * r * z)
-    fac = 2 * r * r * z * z / jnp.sqrt(2 * r * z) / (3 * (r + z) * (r - z))
-    return fac * int3_circ_x1(r, z, y, 1.0, a4)
-
-@jax.jit 
-def G_circ_ym1(r, z, x):
-
-    ig1 = g1_circ_ym1(r, z, x)
-    ig2 = g2_circ_ym1(r, z, x)
-    ig3 = g3_circ_ym1(r, z, x)
-    ig4 = g4_circ(r, z, -1.0, x)
-
-    return ig1 + ig2 + ig3 + ig4
-
-@jax.jit 
-def G_circ_x1(r, z, y):
-
-    ig1 = g1_circ_x1(r, z, y)
-    ig2 = g2_circ_x1(r, z, y)
-    ig3 = g3_circ_x1(r, z, y)
-    ig4 = g4_circ(r, z, y, 1.0)
-
-    return ig1 + ig2 + ig3 + ig4
-
-# this is the full integral along the arc
-@jax.jit
-def G_ym1(a, b, z, x):
-
-    c = jnp.sqrt(a * a - b * b)
-    oc2 = 1 / (c * c)
-    f = (1 - a * a - z * z) * oc2
-    g = -2 * b * z * oc2
-    sqcz = jnp.sqrt(c * c + z * z)
-    dp = (b * z + a * sqcz) * oc2
-    dm = (b * z - a * sqcz) * oc2
-
-    ig1 = g1_ym1(a, b, c, z, x, dp, dm)
-    ig2 = g2_ym1(a, b, c, z, x, f, g, dp, dm)
-    ig3 = g3_ym1(a, b, c, z, x, f, g, dp, dm)
-    ig4 = g4_ym1(a, b, c, z, x, f, g, dp, dm)
-    ig5 = g5_ym1(a, b, c, z, x, f, g, dp, dm)
-    ig6 = g6_ym1(a, b, c, z, x, f, g, dp, dm)
-
-    return ig1 + ig2 + ig3 + ig4 + ig5 + ig6
-
-# this is the full integral along the arc
-@jax.jit
-def G_x1(a, b, z, y):
-
-    c = jnp.sqrt(a * a - b * b)
-    oc2 = 1 / (c * c)
-    f = (1 - a * a - z * z) * oc2
-    g = -2 * b * z * oc2
-    sqcz = jnp.sqrt(c * c + z * z)
-    dp = (b * z + a * sqcz) * oc2
-    dm = (b * z - a * sqcz) * oc2
-
-    ig1 = g1_x1(a, b, c, z, y, dp, dm)
-    ig2 = g2_x1(a, b, c, z, y, f, g, dp, dm)
-    ig3 = g3_x1(a, b, c, z, y, f, g, dp, dm)
-    ig4 = g4_x1(a, b, c, z, y, f, g, dp, dm)
-    ig5 = g5_x1(a, b, c, z, y, f, g, dp, dm)
-    ig6 = g6_x1(a, b, c, z, y, f, g, dp, dm)
-
-    return ig1 + ig2 + ig3 + ig4 + ig5 + ig6
 
 def int23_A(y, x, f, g, b1, b4):
 
@@ -417,7 +313,6 @@ int3_x1 = jax.jit(
     int23_B(y, 1.0, f, g, -1, 1)
 )
 
-# y = -1
 def int4_ym1(x, f, g):
 
     x1 = jnp.sqrt(1 + x)
@@ -681,7 +576,7 @@ def int56_ym1(x, f, g, a5, b5):
         4 * (c14sq + c1c4) * rd(M2, Lm2, Lp2) 
         - 6 * erf 
         + 3 / U
-    )# + 2 * x1 * y1 / (x4 * y4 * U)
+    )
     I3 = (2 / 3) * jnp.sqrt(c1sq / c5sq) * (
         4 * (d14 / d15) * (c15sq + c1c5) * rj_posp(M2, Lm2, Lp2, Wp2) 
         - 6 * erf 
@@ -726,103 +621,3 @@ int6_x1 = (
     lambda y, f, g, dp: 
     -int56_x1(y, f, g, dp, -1)
 )
-
-def g1_x1(a, b, c, z, y, dp, dm):
-
-    c2 = c * c
-    fac = - a / (3 * c2 * (dm * dm - 1) * (dm - dp) * (dp * dp - 1))
-    v = (dm - 1) * (dm - dp) * (dp - 1) * (b - z)
-
-    sm = jnp.sign(dm - 1)
-    sp = jnp.sign(dp - 1)
-    
-    u1 = 2 * sm * jnp.sqrt((dm - 1) * (dm + 1)) * (dp * dp - 1) * (b + dm * z)
-    u2 = 2 * sp * jnp.sqrt((dp - 1) * (dp + 1)) * (dm * dm - 1) * (b + dp * z)
-
-    def f(t):
-
-        q = jnp.sqrt((1 + t) / (1 - t))
-        return (
-            -v * (jnp.arctan(q) + jnp.arctan(1 / q)) 
-            - u1 * jnp.arctan(jnp.sqrt((dm + 1) * (1 - t) / ((dm - 1) * (1 + t))))
-            + u2 * jnp.arctan(jnp.sqrt((dp + 1) * (1 - t) / ((dp - 1) * (1 + t))))
-        )
-
-    fx = -v * jnp.pi / 2
-
-    return fac * (f(y) - fx)
-
-def g1_ym1(a, b, c, z, x, dp, dm):
-
-    c2 = c * c
-    fac = - a / (3 * c2 * (dm * dm - 1) * (dm - dp) * (dp * dp - 1))
-    v = (dm - 1) * (dm - dp) * (dp - 1) * (b - z)
-
-    sm = jnp.sign(dm - 1)
-    sp = jnp.sign(dp - 1)
-    
-    u1 = 2 * sm * jnp.sqrt((dm - 1) * (dm + 1)) * (dp * dp - 1) * (b + dm * z)
-    u2 = 2 * sp * jnp.sqrt((dp - 1) * (dp + 1)) * (dm * dm - 1) * (b + dp * z)
-
-    def f(t):
-
-        q = jnp.sqrt((1 + t) / (1 - t))
-        return (
-            -v * (jnp.arctan(q) + jnp.arctan(1 / q)) 
-            - u1 * jnp.arctan(jnp.sqrt((dm + 1) * (1 - t) / ((dm - 1) * (1 + t))))
-            + u2 * jnp.arctan(jnp.sqrt((dp + 1) * (1 - t) / ((dp - 1) * (1 + t))))
-        )
-
-    fy = -v * jnp.pi / 2 - u1 * jnp.pi / 2 + u2 * jnp.pi / 2
-
-    return fac * (fy - f(x))
-    
-def g2_ym1(a, b, c, z, x, f, g, dp, dm):
-
-    fac = a * c * z / 6 + a * (b + z) / (6 * c * (dm - 1) * (dp - 1))
-    return fac * int2_ym1(x, f, g)
-
-def g2_x1(a, b, c, z, y, f, g, dp, dm):
-
-    fac = a * c * z / 6 + a * (b + z) / (6 * c * (dm - 1) * (dp - 1))
-    return fac * int2_x1(y, f, g)
-
-def g3_ym1(a, b, c, z, x, f, g, dp, dm):
-
-    fac = -a * c * z / 6 + a * (b - z) / (6 * c * (dm + 1) * (dp + 1))
-    return fac * int3_ym1(x, f, g)
-
-def g3_x1(a, b, c, z, y, f, g, dp, dm):
-
-    fac = -a * c * z / 6 + a * (b - z) / (6 * c * (dm + 1) * (dp + 1))
-    return fac * int3_x1(y, f, g)
-
-def g4_ym1(a, b, c, z, x, f, g, dp, dm):
-
-    fac = a * b * c / 3
-    return fac * int4_ym1(x, f, g)
-
-def g4_x1(a, b, c, z, y, f, g, dp, dm):
-
-    fac = a * b * c / 3
-    return fac * int4_x1(y, f, g)
-
-def g5_ym1(a, b, c, z, x, f, g, dp, dm):
-
-    fac = a * (b + z * dm) / (3 * c * (dm * dm - 1) * (dm - dp))
-    return fac * int5_ym1(x, f, g, dm)
-
-def g5_x1(a, b, c, z, y, f, g, dp, dm):
-
-    fac = a * (b + z * dm) / (3 * c * (dm * dm - 1) * (dm - dp))
-    return fac * int5_x1(y, f, g, dm)
-
-def g6_ym1(a, b, c, z, x, f, g, dp, dm):
-
-    fac = a * (b + z * dp) / (3 * c * (dp * dp - 1) * (dm - dp))
-    return fac * int6_ym1(x, f, g, dp)
-
-def g6_x1(a, b, c, z, y, f, g, dp, dm):
-
-    fac = a * (b + z * dp) / (3 * c * (dp * dp - 1) * (dm - dp))
-    return fac * int6_x1(y, f, g, dp)
