@@ -1,8 +1,9 @@
-from conics import *
-from arc_utils import *
-from utils import *
 import jax
 import jax.numpy as jnp
+
+from .conics import *
+from .arc_utils import *
+from .utils import *
 
 def xstar(star_arcdict, spot, xsecs):
 

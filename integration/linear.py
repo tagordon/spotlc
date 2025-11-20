@@ -242,15 +242,22 @@ def g3_circ_x1(r, z, y):
     fac = 2 * r * r * z * z / jnp.sqrt(2 * r * z) / (3 * (r + z) * (r - z))
     return fac * int3_circ_x1(r, z, y, 1.0, a4)
 
-def g4_circ_xm1(r, z, y, x):
+# changed this from 1.0 to -1.0 Apr. 27
+def g4_circ_xm1(r, z, y):
 
     fac = r * (r - z + 1) * (r - z - 1) / (6 * (r - z)) * jnp.sqrt(2 * r * z)
-    return fac * int4_circ_halfcomp(r, z, y, 1.0)
+    return fac * int4_circ_halfcomp(r, z, y, -1.0)
 
-def g4_circ_ym1(r, z, y, x):
+def g4_circ_ym1(r, z, x):
 
     fac = r * (r - z + 1) * (r - z - 1) / (6 * (r - z)) * jnp.sqrt(2 * r * z)
     return fac * int4_circ_halfcomp(r, z, -1.0, x)
+
+# not sure about this... but should be okay. 
+def g4_circ_x1(r, z, y):
+
+    fac = r * (r - z + 1) * (r - z - 1) / (6 * (r - z)) * jnp.sqrt(2 * r * z)
+    return fac * int4_circ_halfcomp(r, z, y, 1.0)
 
 def g1_x1(a, b, c, z, y, dp, dm):
 

@@ -5,11 +5,11 @@
 
 import jax
 from jax import numpy as jnp
-from carlson import rf, rj_posp, rc_posy, rd
-#from carlson import rf_fast as rf
-#from carlson import rj_posp_fast as rj_posp
-#from carlson import rc_posy_fast as rc_posy
-#from carlson import rd_fast as rd
+#from carlson import rf, rj_posp, rc_posy, rd
+from carlson import rf_fast as rf
+from carlson import rj_posp_fast as rj_posp
+from carlson import rc_posy_fast as rc_posy
+from carlson import rd_fast as rd
 
 def int23_circ(r, z, y, x, a4, b4):
 

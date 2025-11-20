@@ -1,7 +1,9 @@
 import jax
 from jax import jit
 import jax.numpy as jnp
-from matrix import *
+
+from .matrix import *
+#from matrix import *
 
 from jax import config
 config.update("jax_enable_x64", True)

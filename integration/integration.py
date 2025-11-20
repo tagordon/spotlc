@@ -135,29 +135,29 @@ def circle(r, z, phi1, phi2):
 
     outcomes = [
         lambda: (
-            c.Gc(a, b, z, phi1, phi2),
-            2 * l.Gc_comp(a, b, z) - l.Gc(a, b, z, s2, s1),
-            q.Gc(a, b, z, phi1, phi2)
+            c.Gc(r, z, phi1, phi2),
+            2 * l.Gc_comp(r, z) - l.Gc(r, z, s2, s1),
+            q.Gc(r, z, phi1, phi2)
         ),
         lambda: (
-            c.Gc(a, b, z, phi1, phi2),
-            l.Gc(a, b, z, s1, s2),
-            q.Gc(a, b, z, phi1, phi2)
+            c.Gc(r, z, phi1, phi2),
+            l.Gc(r, z, s1, s2),
+            q.Gc(r, z, phi1, phi2)
         ),
         lambda: (
-            c.Gc(a, b, z, phi1, phi2),
-            l.Gc_x1(a, b, z, s1) + l.Gc_x1(a, b, z, s2),
-            q.Gc(a, b, z, phi1, phi2),
+            c.Gc(r, z, phi1, phi2),
+            l.Gc_x1(r, z, s1) + l.Gc_x1(r, z, s2),
+            q.Gc(r, z, phi1, phi2),
         ),
         lambda: (
-            c.Gc(a, b, z, phi1, phi2),
-            l.Gc(a, b, z, s2, s1),
-            q.Gc(a, b, z, phi1, phi2),
+            c.Gc(r, z, phi1, phi2),
+            l.Gc(r, z, s2, s1),
+            q.Gc(r, z, phi1, phi2),
         ),
         lambda: (
-            c.Gc(a, b, z, phi1, phi2),
-            l.Gc_ym1(a, b, z, s1) + l.Gc_ym1(a, b, z, s2),
-            q.Gc(a, b, z, phi1, phi12)
+            c.Gc(r, z, phi1, phi2),
+            l.Gc_ym1(r, z, s1) + l.Gc_ym1(r, z, s2),
+            q.Gc(r, z, phi1, phi2)
         )
     ]
 

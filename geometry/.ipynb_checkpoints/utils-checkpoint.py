@@ -1,8 +1,9 @@
+from .conics import *
+from .matrix import *
+
 import jax
 from jax import jit
 import jax.numpy as jnp
-from conics import *
-from matrix import *
 
 # definition for the stellar limb
 star = {
